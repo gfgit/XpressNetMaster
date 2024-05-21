@@ -152,7 +152,7 @@ class XpressNetMasterClass
   public:
     XpressNetMasterClass(void);	//Constuctor
 	#if defined(ESP8266) || defined(ESP32)
-	void setup(uint8_t FStufen, uint8_t XNetPort, uint8_t XControl, bool XnModeAuto = true);  //Initialisierung Serial
+    void setup(uint8_t FStufen, uint8_t XNetPortRX, uint8_t XNetPortTX, uint8_t XControl, bool XnModeAuto = true);  //Initialisierung Serial
 	#else
 	void setup(uint8_t FStufen, uint8_t XControl, bool XnModeAuto = true);  //Initialisierung Serial
 	#endif

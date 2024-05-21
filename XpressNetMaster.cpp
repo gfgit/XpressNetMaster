@@ -78,7 +78,7 @@ XpressNetMasterClass::XpressNetMasterClass()
 
 //******************************************Serial*******************************************
 #if defined(ESP8266) || defined(ESP32)
-void XpressNetMasterClass::setup(uint8_t FStufen, uint8_t  XNetPort, uint8_t  XControl, bool XnModeAuto)  //Initialisierung Serial
+void XpressNetMasterClass::setup(uint8_t FStufen, uint8_t  XNetPortRX, uint8_t XNetPortTX, uint8_t  XControl, bool XnModeAuto)  //Initialisierung Serial
 #else
 void XpressNetMasterClass::setup(uint8_t FStufen, uint8_t  XControl, bool XnModeAuto)  //Initialisierung Serial
 #endif
@@ -128,7 +128,7 @@ void XpressNetMasterClass::setup(uint8_t FStufen, uint8_t  XControl, bool XnMode
 	active_object = this;		//hold Object to call it back in ISR
 	 
 #elif defined(ESP8266) || defined(ESP32) 
-	XNetSwSerial.begin(62500, SWSERIAL_8S1, XNetPort, XNetPort, false, 95); //One Wire Half Duplex Serial, parity mode SPACE
+    XNetSwSerial.begin(62500, SWSERIAL_8S1, XNetPortRX, XNetPortTX, false, 95); //One Wire Half Duplex Serial, parity mode SPACE
 	if (!XNetSwSerial) { // If the object did not initialize, then its configuration is invalid
 		Serial.println("Invalid SoftwareSerial pin configuration, check config"); 
 		while (1) { // Don't continue with invalid configuration

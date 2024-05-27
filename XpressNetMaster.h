@@ -37,15 +37,22 @@
     - remove blocking Interrups while tx on ESP8266 and ESP32
 */
 
-// ensure this library description is only included once
+// Ensure this library description is only included once
 #ifndef XpressNetMaster_h
 #define XpressNetMaster_h
 
 // CONFIG:
 #define XNetVersion 0x40 // System Bus Version
-#define XNetID      0x10 // Zentrale: 0x00 = LZ100; 0x01 = LH200; 0x10 = ROCO MultiMaus; 0x02 = other;
 
-// include types & constants of Wiring core API
+/* Command Station ID:
+ * 0x00 = LZ100
+ * 0x01 = LH200
+ * 0x10 = ROCO MultiMaus
+ * 0x02 = other
+ */
+#define XNetID 0x10
+
+// Include types & constants of Wiring core API
 #if defined(WIRING)
 #    include <Wiring.h>
 #elif ARDUINO >= 100
@@ -76,14 +83,17 @@
 // #define XNetDEBUGTime	//Put out the microseconds
 
 //--------------------------------------------------------------------------------------------
-/*An XpressNet device designed to work with XpressNet V3 and later systems must be designed so that
-it begins its transmission within 110 microseconds of receiving its transmission window.  (older
-X-Bus based systems required this transmission to begin with in 40 microseconds.)  Command stations
-must be designed to accept transmissions received up to 120 microseconds after transmitting the
-window.  The difference is to provide a design tolerance between the different types of devices.
-Under normal conditions an XpressNet device must be designed to be able to handle the receipt of its
-next transmission window between 400 microseconds and 500 milliseconds after the receipt of the last
-window.  */
+/*
+ * An XpressNet device designed to work with XpressNet V3 and later systems must be designed
+ * so that it begins its transmission within 110 microseconds of receiving its transmission window.
+ * (older X-Bus based systems required this transmission to begin with in 40 microseconds.)
+ * Command stations must be designed to accept transmissions received up to 120 microseconds
+ * after transmitting the window.
+ * The difference is to provide a design tolerance between the different types of devices.
+ * Under normal conditions an XpressNet device must be designed to be able to handle
+ * the receipt of its next transmission window between 400 microseconds and 500 milliseconds
+ * after the receipt of the last window.
+ */
 
 #if defined(ESP8266) || defined(ESP32)
 #    define XNetTransmissionWindow 3000 // wait longer = slower, because software serial interrupt
@@ -92,7 +102,7 @@ window.  */
 #endif
 
 // XpressNet Buffer length (send and receive):
-#define XNetBufferSize 5 // max Data Pakets (max: 4 Bit = 16!)
+#define XNetBufferSize 5 // max Data Packets (max: 4 Bit = 16!)
 
 // XpressNet Mode (Master/Slave)
 #define XNetSlaveCycle 0xFF // max (255) cycles to Stay in SLAVE MODE when no CallByte is received
@@ -109,16 +119,16 @@ window.  */
 #define FB_BROADCAST      0xA0 // 0x1A0
 #define MY_ADDRESS        0x5F // only for SLAVE-MODE Adr=31 (0x5F) or Adr=26 (0x5A)!
 
-#define ACK_REQ           0x9A // Acknowledge-Anforderungen beantworten mit 0x20 0x20
+#define ACK_REQ           0x9A // Answer acknowledge requests with 0x20 0x20
 
-// certain global XPressnet status indicators
-#define csNormal          0x00 // Normal Operation Resumed ist eingeschaltet
-#define csEmergencyStop   0x01 // Der Nothalt ist eingeschaltet
-#define csTrackVoltageOff 0x02 // Die Gleisspannung ist abgeschaltet
-#define csShortCircuit    0x04 // Kurzschluss
-#define csServiceMode     0x08 // Der Programmiermodus ist aktiv - Service Mode
+// Some global XPressnet status indicators
+#define csNormal          0x00 // Normal Operation Resumed is switched on
+#define csEmergencyStop   0x01 // The emergency stop is switched on
+#define csTrackVoltageOff 0x02 // The track voltage is switched off
+#define csShortCircuit    0x04 // Short circuit
+#define csServiceMode     0x08 // Programming mode is active - Service mode
 
-// XpressNet Befehl, with max. 7 data bytes!
+// XpressNet command, with max. 7 data bytes!
 #define XNetCallByte      0 // CallByte
 #define XNetheader        1 // Header
 #define XNetdata1         2 // Databyte1
@@ -128,14 +138,14 @@ window.  */
 #define XNetdata5         6 // Databyte5
 #define XNetdata6         7 // Databyte6
 #define XNetdata7         8 // Databyte7
-#define XNetCRC           9 // Checksumme
+#define XNetCRC           9 // Checksum
 
-#define XNetBufferMaxData 10 // max Bytes over all for each Paket
+#define XNetBufferMaxData 10 // max Bytes over all for each Packet
 
-typedef struct // Msg Seicher
+typedef struct // Msg struct
 {
-    uint8_t length;                  // Speicher f�r Datenl�nge
-    uint8_t data[XNetBufferMaxData]; // zu sendende Daten
+    uint8_t length;                  // Data length
+    uint8_t data[XNetBufferMaxData]; // Data to be sent
 } XNetMessage;
 
 typedef struct // Buffer
@@ -156,60 +166,66 @@ class XpressNetMasterClass
     void setup(uint8_t FStufen, uint8_t XNetPortRX, uint8_t XNetPortTX, uint8_t XControl,
                bool XnModeAuto = true); // Initialisierung Serial
 #else
-    void setup(uint8_t FStufen, uint8_t XControl, bool XnModeAuto = true); // Initialisierung Serial
+    void setup(uint8_t FStufen, uint8_t XControl, bool XnModeAuto = true); // Initialise Serial
 #endif
     bool update(void); // Set new Data on the Dataline
 
-    bool getOperationModeMaster(void); // gibt TRUE zur�ck wenn aktuelle Master Mode aktiv ist!
+    bool getOperationModeMaster(void); // returns TRUE if the current master mode is active!
 
-    void setPower(byte Power);                  // Zustand Gleisspannung Melden
-    void setBCFeedback(byte data1, byte data2); // R�ckmeldedaten an Clients verteilen
+    void setPower(byte Power);                  // set track power status
+    void setBCFeedback(byte data1, byte data2); // Distribute feedback data to clients
 
     // Control Loco
-    void ReqLocoBusy(uint16_t Adr);                  // Lok Adresse besetzt melden
-    void SetLocoBusy(uint8_t UserOps, uint16_t Adr); // Lok besetzt melden
+    void ReqLocoBusy(uint16_t Adr);                  // Report locomotive address occupied
+    void SetLocoBusy(uint8_t UserOps, uint16_t Adr); // Locomotive address occupied
 
-    void getStatus();               // Staus der Zentrale erfragen
-    void getLocoInfo(uint16_t Adr); // Slave Modus Lok Informationen erfragen!
-    void getLocoFkt(uint16_t Adr);  // Slave Modus Lok Funktionen erfragen!
+    void getStatus();               // Request Command Station status
+    void getLocoInfo(uint16_t Adr); // Slave requests Locomotive information
+    void getLocoFkt(uint16_t Adr);  // Slave requests Locomotive function information
 
-    void SetLocoInfo(uint8_t UserOps, uint8_t Speed, uint8_t F0, uint8_t F1); // Lokinfo an XNet
-                                                                              // Melden
+    void SetLocoInfo(uint8_t UserOps, uint8_t Speed, uint8_t F0,
+                     uint8_t F1); // Report loco info to XNet (Master only)
+
     void SetLocoInfo(uint8_t UserOps, uint8_t Steps, uint8_t Speed, uint8_t F0,
-                     uint8_t F1);                               // Lokinfo an XNet Melden
-    void SetFktStatus(uint8_t UserOps, uint8_t F4, uint8_t F5); // LokFkt an XNet Melden
+                     uint8_t F1); // Report loco info to XNet (Master only)
+
+    void SetFktStatus(uint8_t UserOps, uint8_t F4,
+                      uint8_t F5); // Report loco functions to XNet (Master only)
+
     void SetLocoInfoMM(uint8_t UserOps, uint8_t Steps, uint8_t Speed, uint8_t F0, uint8_t F1,
                        uint8_t F2, uint8_t F3);
+
     void SetTrntStatus(uint8_t UserOps, uint16_t Address,
-                       uint8_t Data); // data=0000 00AA	A=Weichenausgang1+2 (Aktive/Inaktive);
-    void SetTrntPos(uint16_t Address, uint8_t state, uint8_t active); // �nderung der Weichenlage
+                       uint8_t Data); // data=0000 00AA	A=Switch output 1+2 (Active/Inactive);
+
+    void SetTrntPos(uint16_t Address, uint8_t state, uint8_t active); // Change the switch position
 
     void setSpeed(uint16_t Adr, uint8_t Steps, uint8_t Speed);
-    void setFunc0to4(uint16_t Adr, uint8_t G1);   // Gruppe 1: 0 0 0 F0 F4 F3 F2 F1
-    void setFunc5to8(uint16_t Adr, uint8_t G2);   // Gruppe 2: 0 0 0 0 F8 F7 F6 F5
-    void setFunc9to12(uint16_t Adr, uint8_t G3);  // Gruppe 3: 0 0 0 0 F12 F11 F10 F9
-    void setFunc13to20(uint16_t Adr, uint8_t G4); // Gruppe 4: F20 F19 F18 F17 F16 F15 F14 F13
-    void setFunc21to28(uint16_t Adr, uint8_t G5); // Gruppe 5: F28 F27 F26 F25 F24 F23 F22 F21
+    void setFunc0to4(uint16_t Adr, uint8_t G1);   // Group 1: 0 0 0 F0 F4 F3 F2 F1
+    void setFunc5to8(uint16_t Adr, uint8_t G2);   // Group 2: 0 0 0 0 F8 F7 F6 F5
+    void setFunc9to12(uint16_t Adr, uint8_t G3);  // Group 3: 0 0 0 0 F12 F11 F10 F9
+    void setFunc13to20(uint16_t Adr, uint8_t G4); // Group 4: F20 F19 F18 F17 F16 F15 F14 F13
+    void setFunc21to28(uint16_t Adr, uint8_t G5); // Group 5: F28 F27 F26 F25 F24 F23 F22 F21
 
     void setCVReadValue(uint8_t cvAdr, uint8_t value); // return a CV data read
     void setCVNack(void);                              // no ACK
     void setCVNackSC(void);                            // no ACK Short Circuit
 
     // public only for easy access by interrupt handlers
-    static inline void handle_RX_interrupt(); // Serial RX Interrupt bearbeiten
-    static inline void handle_TX_interrupt(); // Serial TX Interrupt bearbeiten
+    static inline void handle_RX_interrupt(); // Serial RX Interrupt
+    static inline void handle_TX_interrupt(); // Serial TX Interrupt
 
     // library-accessible "private" interface
   private:
     // Variables:
-    bool XModeAuto;        // ON = Automatische Umschaltung Master/Slave-Mode; OFF = Slave Mode only
-    uint8_t XNetSlaveMode; // > 0 then we are working in SLAVE MODE
-    uint8_t XNetSlaveInit; // send initialize sequence
-    byte Railpower;        // Data of the actual Power State
-    byte Fahrstufe;        // Standard f�r Fahrstufe
-    byte MAX485_CONTROL;   // Port for send or receive control
-    uint8_t XNetAdr;       // Adresse des Abzufragenden XNet Device
-    unsigned long XSendCount; // Zeit: Call Byte ausgesendet, data received
+    bool XModeAuto;           // ON = Automatic master/slave mode switch; OFF = Slave Mode only
+    uint8_t XNetSlaveMode;    // > 0 then we are working in SLAVE MODE
+    uint8_t XNetSlaveInit;    // send initialize sequence
+    byte Railpower;           // Data of the actual Power State
+    byte Fahrstufe;           // Default speed steps
+    byte MAX485_CONTROL;      // Port for send or receive control
+    uint8_t XNetAdr;          // Address of the XNet device to be queried
+    unsigned long XSendCount; // Time: Call byte sent, data received
 
     XNetBuffer XNetRXBuffer; // Read Buffer
 
@@ -222,11 +238,11 @@ class XpressNetMasterClass
     void SetBusy(uint8_t Slot);                      // send busy message to slot that doesn't use
     void AddBusySlot(uint8_t UserOps, uint16_t Adr); // add loco to slot
 
-    void XNetRXclear(uint8_t b); // Clear a spezial RX Message
+    void XNetRXclear(uint8_t b); // Clear a special RX message
 
     // Functions:
-    void unknown(void);             // unbekannte Anfrage
-    void getNextXNetAdr(void);      // N�CHSTE Adr of XNet Device
+    void unknown(void);             // unknown enquiry
+    void getNextXNetAdr(void);      // Next XNet device address
     bool XNetCheckXOR(void);        // Checks the XOR
     void XNetAnalyseReceived(void); // work on received data
 
@@ -237,14 +253,14 @@ class XpressNetMasterClass
 
     XNetBuffer XNetTXBuffer;
 
-    void XNetsend(byte *dataString, byte byteCount); // Sende Datenarray out NOW!
+    void XNetsend(byte *dataString, byte byteCount); // Send data array out NOW!
     uint16_t XNetReadBuffer(void);                   // read out next Buffer Data
     void getXOR(uint8_t *data, byte length);         // calculate the XOR
-    void XNetSendData(void); // Sendet Daten aus dem Buffer mittels Interrupt
-    void XNetSendNext(void); // Recursives sende weiterer Daten aus dem Buffer
-    void XNetReceive(void);  // Speichern der eingelesenen Daten
+    void XNetSendData(void);                         // Sends data from the buffer via interrupt
+    void XNetSendNext(void); // Recursively send further data from the buffer
+    void XNetReceive(void);  // Store the received data
 
-    uint16_t XNetCVAdr;  // CV Adr that was read
+    uint16_t XNetCVAdr;  // CV Address that was read
     uint8_t XNetCVvalue; // read CV Value
 
     uint16_t SlaveRequestLocoInfo = 0; // Lok that we request for Lokdata

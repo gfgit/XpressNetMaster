@@ -47,13 +47,13 @@ XpressNetMasterClass::XpressNetMasterClass()
     XNetAdr = 0;       // Startaddresse des ersten XNet Device
     XNetSlaveMode = 0; // Start in MASTER MODE
     XNetSlaveInit = 0; // for init state in Slave Mode
-    XModeAuto = true;  // Automatische Umschaltung Master/Slave Mode aktiv
+    XModeAuto = true;  // Automatic master/slave mode switch is active
     Railpower = csNormal;
     Fahrstufe = Loco128;
 
     for (byte s = 0; s < 32; s++)
     {                           // clear busy slots
-        SlotLokUse[s] = 0xFFFF; // slot is inactiv
+        SlotLokUse[s] = 0xFFFF; // slot is inactive
     }
 
     XNetTXBuffer.get = 0; // start position to read data from the buffer
@@ -672,10 +672,10 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                              | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & B110) >> 1),
                            XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
         // XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] = 0000 ABBP
-        // A = Weichenausgang(Spulenspannung EIN/AUS)
-        // BB = Adresse des Dekoderport 1..4
-        // P = Ausgang (Gerade = 0 / Abzweigen = 1)
-        // XNetclear();	//alte Nachricht l�schen
+        // A = Switch output (coil voltage ON/OFF)
+        // BB = Address of the decoder port 1..4
+        // P = Output (straight = 0 / branch = 1)
+        // XNetclear();	// Delete old message
         break;
     case 0x53: // Accessory Decoder >1024 operation request ab Version 3.8
         if (notifyXNetTrnt)
@@ -685,8 +685,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                              | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3] & B110) >> 1),
                            XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
         break;
-    default:       // Befehl in Zentrale nicht vorhanden
-        unknown(); // unbekannte Anfrage
+    default:       // Command not available in command station
+        unknown(); // Unknown request
     }
 
     if (XNetSlaveMode != 0x00)
@@ -900,7 +900,7 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                     SlaveRequestLocoFkt = 0; // reset
                 }
                 break;
-            case 0x42: // Antwort Schaltinformation
+            case 0x42: // Answer switch information request
                 if (notifyXNetTrnt)
                     notifyXNetTrnt(
                       (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 2)
@@ -911,11 +911,11 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 break;
             } // switch HEADER END
         }     // MY_ADDRESS END
-    }         // ENDE SLAVE MODE
+    }         // SLAVE MODE END
 }
 
 //--------------------------------------------------------------------------------------------
-// R�ckmeldung �ber Zustand Master-Mode:
+// Feedback on the master mode status:
 bool XpressNetMasterClass::getOperationModeMaster(void)
 {
     if (XNetSlaveMode == 0x00)
@@ -926,8 +926,8 @@ bool XpressNetMasterClass::getOperationModeMaster(void)
 }
 
 //--------------------------------------------------------------------------------------------
-// Befehl in Zentrale nicht vorhanden
-void XpressNetMasterClass::unknown(void) // unbekannte Anfrage
+// Command not available in command station
+void XpressNetMasterClass::unknown(void) // Unknown Request
 {
     if (XNetSlaveMode == 0x00)
     { // MASTER MODE

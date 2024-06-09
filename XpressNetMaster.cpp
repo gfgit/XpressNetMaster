@@ -38,6 +38,42 @@ XpressNetMasterClass *XpressNetMasterClass::active_object = 0; // Static
 SoftwareSerial XNetSwSerial;
 #endif
 
+
+// TEST DUMP HELPER
+#include <SoftwareSerial.h>
+
+extern SoftwareSerial XNetSerialMock;
+
+enum SpecialCotrolChar2
+{
+    StartMessage = 0x01,
+    EndMessage = 0x02,
+    EscapeChar = 0x03
+};
+
+const int MESSAGE_DUMP = 100;
+
+void soft_write2(Stream& s, uint8_t *ptr, int sz)
+{
+    s.write(SpecialCotrolChar2::StartMessage);
+    for(int i = 0; i < sz; i++)
+    {
+        uint8_t ch = *ptr;
+        ptr++;
+
+        if(ch <= SpecialCotrolChar2::EscapeChar)
+        {
+            // Escape character
+            s.write(SpecialCotrolChar2::EscapeChar);
+            ch += (SpecialCotrolChar2::EscapeChar + 1);
+        }
+        s.write(ch);
+    }
+    s.write(SpecialCotrolChar2::EndMessage);
+}
+
+// TEST DUMP END
+
 // Constructor /////////////////////////////////////////////////////////////////
 // Function that handles the creation and setup of instances
 
@@ -667,6 +703,14 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                                XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
         break;
     case 0x52: // Accessory Decoder operation request
+    {
+        uint8_t msgBuf[4];
+        msgBuf[0] = MESSAGE_DUMP;
+        msgBuf[1] = 0x52;
+        msgBuf[2] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+        msgBuf[3] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 4);
+
         if (notifyXNetTrnt)
             notifyXNetTrnt((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 2)
                              | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & B110) >> 1),
@@ -676,8 +720,19 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         // BB = Address of the decoder port 1..4
         // P = Output (straight = 0 / branch = 1)
         // XNetclear();	// Delete old message
+
         break;
+    }
     case 0x53: // Accessory Decoder >1024 operation request ab Version 3.8
+    {
+        uint8_t msgBuf[5];
+        msgBuf[0] = MESSAGE_DUMP;
+        msgBuf[1] = 0x53;
+        msgBuf[2] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+        msgBuf[3] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+        msgBuf[4] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3];
+        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 5);
+
         if (notifyXNetTrnt)
             notifyXNetTrnt((((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 8)
                              | XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2])
@@ -685,6 +740,7 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                              | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3] & B110) >> 1),
                            XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
         break;
+    }
     default:       // Command not available in command station
         unknown(); // Unknown request
     }
@@ -901,12 +957,61 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 }
                 break;
             case 0x42: // Answer switch information request
+            {
+                uint8_t msgBuf[4];
+                msgBuf[0] = MESSAGE_DUMP;
+                msgBuf[1] = 0x42;
+                msgBuf[2] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+                msgBuf[3] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+                soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 4);
+
+                uint8_t baseAddress = 4 * XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+
+                uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+                bool active = (data2 & 0x80) == 0x80;
+                uint8_t tt = (data2 & 0b110000) >> 5;
+                if(tt != 0b00 && tt != 0b01)
+                    break; // It's a feedback module, we only care about turnouts
+
+                bool upperNibble = (data2 & 0x10000) == 0x10000;
+                if(upperNibble)
+                    baseAddress += 2;
+
+                uint8_t firstStatus = (data2 & 0b1100) >> 2;
+                uint8_t secondStatus = data2 & 0b11;
+
+                if (false && notifyXNetTrnt)
+                {
+                    uint8_t fakeStatus = 0x80;
+                    if(active)
+                        fakeStatus |= 0b1000;
+                    if(upperNibble)
+                        fakeStatus |= 0b0100;
+
+                    uint8_t fakeFirst = fakeStatus;
+                    if(firstStatus != 0)
+                        fakeFirst |= 0b1;
+
+                    //notifyXNetTrnt(baseAddress, fakeFirst);
+                    notifyXNetTrnt(0, 0);
+
+                    uint8_t fakeSecond = fakeStatus;
+                    if(secondStatus != 0)
+                        fakeSecond |= 0b1;
+                    //notifyXNetTrnt(baseAddress + 1, fakeSecond);
+                    notifyXNetTrnt(0, 0);
+                }
+
+                /*
                 if (notifyXNetTrnt)
                     notifyXNetTrnt(
                       (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 2)
                         | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & B110) >> 1),
                       XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+                */
+
                 break;
+            }
             case 0xE1: // Err Lok control
                 break;
             } // switch HEADER END

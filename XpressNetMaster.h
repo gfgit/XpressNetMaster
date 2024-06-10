@@ -271,15 +271,18 @@ class XpressNetMasterClass
 extern "C"
 {
 #endif
+    // Power
     extern void notifyXNetPower(uint8_t State) __attribute__((weak));
-    extern uint8_t getPowerState() __attribute__((weak)); // give Back Actual Power State
-    // Fahrbefehl:
+    extern uint8_t getPowerState() __attribute__((weak)); // Give back Actual Power State
+
+    // Loco drive:
     extern void notifyXNetgiveLocoInfo(uint8_t UserOps, uint16_t Address) __attribute__((weak));
     extern void notifyXNetLocoDrive14(uint16_t Address, uint8_t Speed) __attribute__((weak));
     extern void notifyXNetLocoDrive27(uint16_t Address, uint8_t Speed) __attribute__((weak));
     extern void notifyXNetLocoDrive28(uint16_t Address, uint8_t Speed) __attribute__((weak));
     extern void notifyXNetLocoDrive128(uint16_t Address, uint8_t Speed) __attribute__((weak));
-    // Funktionsbefehl:
+
+    // Loco functions:
     extern void notifyXNetgiveLocoFunc(uint8_t UserOps, uint16_t Address) __attribute__((weak));
     extern void notifyXNetLocoFunc1(uint16_t Address, uint8_t Func1)
       __attribute__((weak)); // Gruppe1 0 0 0 F0 F4 F3 F2 F1
@@ -289,22 +292,27 @@ extern "C"
       __attribute__((weak)); // Gruppe3 0000 F12 F11 F10 F9
     extern void notifyXNetLocoFuncX(uint16_t Address, uint8_t group, uint8_t Func)
       __attribute__((weak)); // Gruppe4 F20-F13, Gruppe5 F28-F21, .....
-    // Weichenbefehl:
+
+    // Turnouts:
     extern void notifyXNetTrntInfo(uint8_t UserOps, uint16_t Address, uint8_t data)
       __attribute__((weak)); // data=0000 000N	N=Nibble N0-(0,1); N1-(2,3);
     extern void notifyXNetTurnout(uint16_t Address, bool straight, bool active, bool unknown);
-      __attribute__((weak)); // data=0000 000A	A=Weichenausgang (Aktive/Inaktive);
-    // R�ckmeldung:
+    __attribute__((weak)); // data=0000 000A	A=Output (Aktive/Inaktive);
+
+    // Feedback:
     extern void notifyXNetFeedback(uint16_t Address, uint8_t data)
-      __attribute__((weak)); // data=0000 000A	A=Weichenausgang (Aktive/Inaktive);
+      __attribute__((weak)); // data=0000 000A	A=Output (Aktive/Inaktive);
+
     // CV:
     extern void notifyXNetDirectCV(uint16_t CV, uint8_t data) __attribute__((weak));
     extern void notifyXNetDirectReadCV(uint16_t cvAdr) __attribute__((weak));
+
     // POM:
     extern void notifyXNetPOMwriteByte(uint16_t Adr, uint16_t CV, uint8_t data)
       __attribute__((weak));
     extern void notifyXNetPOMwriteBit(uint16_t Adr, uint16_t CV, uint8_t data)
       __attribute__((weak));
+
     // MultiMaus:
     extern void notifyXNetgiveLocoMM(uint8_t UserOps, uint16_t Address) __attribute__((weak));
 

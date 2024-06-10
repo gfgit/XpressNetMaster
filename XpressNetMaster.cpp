@@ -39,9 +39,10 @@ SoftwareSerial XNetSwSerial;
 #endif
 
 // TEST DUMP HELPER
-#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
 
-extern SoftwareSerial XNetSerialMock;
+// extern SoftwareSerial XNetSerialMock;
+#define XNetSerialMock Serial
 
 enum SpecialCotrolChar2 {
     StartMessage = 0x01,
@@ -51,6 +52,7 @@ enum SpecialCotrolChar2 {
 
 const int MESSAGE_DUMP = 100;
 
+/*
 void soft_write2(Stream &s, uint8_t *ptr, int sz)
 {
     s.write(SpecialCotrolChar2::StartMessage);
@@ -68,6 +70,20 @@ void soft_write2(Stream &s, uint8_t *ptr, int sz)
         s.write(ch);
     }
     s.write(SpecialCotrolChar2::EndMessage);
+}
+*/
+
+void soft_write2(Stream &s, uint8_t *ptr, int sz)
+{
+    s.print("SOFT: ");
+    for (int i = 0; i < sz; i++)
+    {
+        uint8_t ch = *ptr;
+        ptr++;
+        s.print(int(ch), HEX);
+        s.write(' ');
+    }
+    s.println();
 }
 
 // TEST DUMP END
@@ -742,6 +758,7 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
     }
     case 0x53: // Accessory Decoder >1024 operation request ab Version 3.8
     {
+        // TODO: fix
         uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
         uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
         uint8_t data3 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3];
@@ -1006,19 +1023,30 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 if (tt != 0b00 && tt != 0b01)
                     break; // It's a feedback module, we only care about turnouts
 
-                bool upperNibble = (data2 & 0x10000) == 0x10000;
+                bool upperNibble = (data2 & 0b10000) == 0b10000;
                 if (upperNibble)
                     baseAddress += 2;
 
-                uint8_t firstStatus = (data2 & 0b1100) >> 2;
-                bool firstStraight = firstStatus == 0x01;
-                bool firstUnknown = firstStatus == 0;
+                // Status bits in second byte are: 0 0 0 0 Z3 Z2 Z1 Z0
 
-                uint8_t secondStatus = data2 & 0b11;
-                bool secondStraight = firstStatus == 0x01;
-                bool secondUnknown = firstStatus == 0;
+                // Bit meaning:
+                // 0b00 = unknown position
+                // 0b01 = "0", left,  multiMaus icon diverging track
+                // 0b10 = "1", right, multiMaus icon stright track
+                // 0b11 = Invalid state
 
-                uint8_t msgBuf[11];
+                // First turnout is Z1 Z0
+                uint8_t firstStatus = data2 & 0b11;
+                bool firstStraight = firstStatus == 0b10;
+                bool firstUnknown = firstStatus == 0b00 || firstStatus == 0b11;
+
+                // First turnout is Z3 Z2
+                uint8_t secondStatus = (data2 & 0b1100) >> 2;
+                bool secondStraight = secondStatus == 0b10;
+                bool secondUnknown = secondStatus == 0b00 || secondStatus == 0b11;
+
+                /*
+                uint8_t msgBuf[13];
                 msgBuf[0] = MESSAGE_DUMP;
                 msgBuf[1] = 0x42;
                 msgBuf[2] = data1;
@@ -1030,23 +1058,18 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 msgBuf[8] = firstUnknown ? 1 : 0;
                 msgBuf[9] = secondStraight ? 1 : 0;
                 msgBuf[10] = secondUnknown ? 1 : 0;
+                msgBuf[11] = tt;
+                msgBuf[12] = upperNibble;
 
-                soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 11);
+                soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 13);
+                */
 
-                /*
                 if (notifyXNetTurnout)
                 {
-                    notifyXNetTurnout(baseAddress,
-                                      firstStraight,
-                                      active,
-                                      firstUnknown);
+                    notifyXNetTurnout(baseAddress, firstStraight, active, firstUnknown);
 
-                    notifyXNetTurnout(baseAddress + 1,
-                                      secondStraight,
-                                      active,
-                                      secondUnknown);
+                    notifyXNetTurnout(baseAddress + 1, secondStraight, active, secondUnknown);
                 }
-                */
 
                 /*
                 if (notifyXNetTrnt)

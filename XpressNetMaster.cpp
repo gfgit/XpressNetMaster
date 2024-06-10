@@ -704,17 +704,36 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         break;
     case 0x52: // Accessory Decoder operation request
     {
-        uint8_t msgBuf[4];
+        uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+        uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+
+        uint16_t Address = uint16_t(data1) << 2 | ((data2 & 0b110) >> 1);
+        bool active = data2 & 0b1000;
+        bool straight = !(data2 & 0b0001);
+
+        uint8_t msgBuf[10];
         msgBuf[0] = MESSAGE_DUMP;
         msgBuf[1] = 0x52;
-        msgBuf[2] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
-        msgBuf[3] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
-        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 4);
+        msgBuf[2] = data1;
+        msgBuf[3] = data2;
+        msgBuf[4] = 0;
+        msgBuf[5] = Address >> 8;
+        msgBuf[6] = Address & 0xFF;
+        msgBuf[7] = straight ? 1 : 0;
+        msgBuf[8] = active ? 1 : 0;
+        msgBuf[9] = 0;
+        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 10);
 
+        if(notifyXNetTurnout)
+            notifyXNetTurnout(Address, straight, active, false);
+
+        /*
         if (notifyXNetTrnt)
             notifyXNetTrnt((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 2)
                              | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & B110) >> 1),
                            XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+        */
+
         // XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] = 0000 ABBP
         // A = Switch output (coil voltage ON/OFF)
         // BB = Address of the decoder port 1..4
@@ -725,20 +744,41 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
     }
     case 0x53: // Accessory Decoder >1024 operation request ab Version 3.8
     {
-        uint8_t msgBuf[5];
+        uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+        uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+        uint8_t data3 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3];
+
+        uint16_t Address = uint16_t(data1) << 8 | data2;
+        Address = Address << 2 | ((data3 & 0b110) >> 1);
+        bool active = data3 & 0b1000;
+        bool straight = !(data3 & 0b0001);
+
+        uint8_t msgBuf[11];
         msgBuf[0] = MESSAGE_DUMP;
         msgBuf[1] = 0x53;
-        msgBuf[2] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
-        msgBuf[3] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
-        msgBuf[4] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3];
-        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 5);
+        msgBuf[2] = data1;
+        msgBuf[3] = data2;
+        msgBuf[4] = data3;
+        msgBuf[5] = 0;
+        msgBuf[6] = Address >> 8;
+        msgBuf[7] = Address & 0xFF;
+        msgBuf[8] = straight ? 1 : 0;
+        msgBuf[9] = active ? 1 : 0;
+        msgBuf[10] = 0;
+        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 11);
 
+        if(notifyXNetTurnout)
+            notifyXNetTurnout(Address, straight, active, false);
+
+        /*
         if (notifyXNetTrnt)
             notifyXNetTrnt((((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 8)
                              | XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2])
                             << 2)
                              | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3] & B110) >> 1),
                            XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
+        */
+
         break;
     }
     default:       // Command not available in command station
@@ -958,16 +998,11 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 break;
             case 0x42: // Answer switch information request
             {
-                uint8_t msgBuf[4];
-                msgBuf[0] = MESSAGE_DUMP;
-                msgBuf[1] = 0x42;
-                msgBuf[2] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
-                msgBuf[3] = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
-                soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 4);
-
-                uint8_t baseAddress = 4 * XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
-
+                uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
                 uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
+
+                uint16_t baseAddress = uint16_t(data1) * 4;
+
                 bool active = (data2 & 0x80) == 0x80;
                 uint8_t tt = (data2 & 0b110000) >> 5;
                 if(tt != 0b00 && tt != 0b01)
@@ -978,29 +1013,42 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                     baseAddress += 2;
 
                 uint8_t firstStatus = (data2 & 0b1100) >> 2;
+                bool firstStraight = firstStatus == 0x01;
+                bool firstUnknown = firstStatus == 0;
+
                 uint8_t secondStatus = data2 & 0b11;
+                bool secondStraight = firstStatus == 0x01;
+                bool secondUnknown = firstStatus == 0;
 
-                if (false && notifyXNetTrnt)
+                uint8_t msgBuf[11];
+                msgBuf[0] = MESSAGE_DUMP;
+                msgBuf[1] = 0x42;
+                msgBuf[2] = data1;
+                msgBuf[3] = data2;
+                msgBuf[4] = 0;
+                msgBuf[5] = baseAddress >> 8;
+                msgBuf[6] = baseAddress & 0xFF;
+                msgBuf[7] = firstStraight ? 1 : 0;
+                msgBuf[8] = firstUnknown ? 1 : 0;
+                msgBuf[9] = secondStraight ? 1 : 0;
+                msgBuf[10] = secondUnknown ? 1 : 0;
+
+                soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 11);
+
+                /*
+                if (notifyXNetTurnout)
                 {
-                    uint8_t fakeStatus = 0x80;
-                    if(active)
-                        fakeStatus |= 0b1000;
-                    if(upperNibble)
-                        fakeStatus |= 0b0100;
+                    notifyXNetTurnout(baseAddress,
+                                      firstStraight,
+                                      active,
+                                      firstUnknown);
 
-                    uint8_t fakeFirst = fakeStatus;
-                    if(firstStatus != 0)
-                        fakeFirst |= 0b1;
-
-                    //notifyXNetTrnt(baseAddress, fakeFirst);
-                    notifyXNetTrnt(0, 0);
-
-                    uint8_t fakeSecond = fakeStatus;
-                    if(secondStatus != 0)
-                        fakeSecond |= 0b1;
-                    //notifyXNetTrnt(baseAddress + 1, fakeSecond);
-                    notifyXNetTrnt(0, 0);
+                    notifyXNetTurnout(baseAddress + 1,
+                                      secondStraight,
+                                      active,
+                                      secondUnknown);
                 }
+                */
 
                 /*
                 if (notifyXNetTrnt)

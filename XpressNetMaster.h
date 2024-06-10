@@ -292,7 +292,7 @@ extern "C"
     // Weichenbefehl:
     extern void notifyXNetTrntInfo(uint8_t UserOps, uint16_t Address, uint8_t data)
       __attribute__((weak)); // data=0000 000N	N=Nibble N0-(0,1); N1-(2,3);
-    extern void notifyXNetTrnt(uint16_t Address, uint8_t data)
+    extern void notifyXNetTurnout(uint16_t Address, bool straight, bool active, bool unknown);
       __attribute__((weak)); // data=0000 000A	A=Weichenausgang (Aktive/Inaktive);
     // R�ckmeldung:
     extern void notifyXNetFeedback(uint16_t Address, uint8_t data)

@@ -38,7 +38,6 @@ XpressNetMasterClass *XpressNetMasterClass::active_object = 0; // Static
 SoftwareSerial XNetSwSerial;
 #endif
 
-
 // TEST DUMP HELPER
 #include <SoftwareSerial.h>
 
@@ -1361,13 +1360,13 @@ void XpressNetMasterClass::setSpeed(uint16_t Adr, uint8_t Steps, uint8_t Speed)
     uint8_t LocoInfo[] = {0x00, 0xE4, 0x13, 0x00, 0x00, v, 0x00}; // default to 128 Steps!
     switch (Steps)
     {
-    case 14:
+    case Loco14:
         LocoInfo[2] = 0x10;
         break;
-    case 27:
+    case Loco27:
         LocoInfo[2] = 0x11;
         break;
-    case 28:
+    case Loco28:
         LocoInfo[2] = 0x12;
         break;
     }

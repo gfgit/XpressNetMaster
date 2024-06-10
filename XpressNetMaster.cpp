@@ -44,8 +44,7 @@ SoftwareSerial XNetSwSerial;
 
 extern SoftwareSerial XNetSerialMock;
 
-enum SpecialCotrolChar2
-{
+enum SpecialCotrolChar2 {
     StartMessage = 0x01,
     EndMessage = 0x02,
     EscapeChar = 0x03
@@ -53,15 +52,15 @@ enum SpecialCotrolChar2
 
 const int MESSAGE_DUMP = 100;
 
-void soft_write2(Stream& s, uint8_t *ptr, int sz)
+void soft_write2(Stream &s, uint8_t *ptr, int sz)
 {
     s.write(SpecialCotrolChar2::StartMessage);
-    for(int i = 0; i < sz; i++)
+    for (int i = 0; i < sz; i++)
     {
         uint8_t ch = *ptr;
         ptr++;
 
-        if(ch <= SpecialCotrolChar2::EscapeChar)
+        if (ch <= SpecialCotrolChar2::EscapeChar)
         {
             // Escape character
             s.write(SpecialCotrolChar2::EscapeChar);
@@ -722,9 +721,9 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         msgBuf[7] = straight ? 1 : 0;
         msgBuf[8] = active ? 1 : 0;
         msgBuf[9] = 0;
-        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 10);
+        soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 10);
 
-        if(notifyXNetTurnout)
+        if (notifyXNetTurnout)
             notifyXNetTurnout(Address, straight, active, false);
 
         /*
@@ -765,9 +764,9 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         msgBuf[8] = straight ? 1 : 0;
         msgBuf[9] = active ? 1 : 0;
         msgBuf[10] = 0;
-        soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 11);
+        soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 11);
 
-        if(notifyXNetTurnout)
+        if (notifyXNetTurnout)
             notifyXNetTurnout(Address, straight, active, false);
 
         /*
@@ -1005,11 +1004,11 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
 
                 bool active = (data2 & 0x80) == 0x80;
                 uint8_t tt = (data2 & 0b110000) >> 5;
-                if(tt != 0b00 && tt != 0b01)
+                if (tt != 0b00 && tt != 0b01)
                     break; // It's a feedback module, we only care about turnouts
 
                 bool upperNibble = (data2 & 0x10000) == 0x10000;
-                if(upperNibble)
+                if (upperNibble)
                     baseAddress += 2;
 
                 uint8_t firstStatus = (data2 & 0b1100) >> 2;
@@ -1033,7 +1032,7 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 msgBuf[9] = secondStraight ? 1 : 0;
                 msgBuf[10] = secondUnknown ? 1 : 0;
 
-                soft_write2(XNetSerialMock, (uint8_t*)&msgBuf, 11);
+                soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 11);
 
                 /*
                 if (notifyXNetTurnout)

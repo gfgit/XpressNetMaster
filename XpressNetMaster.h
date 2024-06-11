@@ -296,8 +296,8 @@ extern "C"
     // Turnouts:
     extern void notifyXNetTrntInfo(uint8_t UserOps, uint16_t Address, uint8_t data)
       __attribute__((weak)); // data=0000 000N	N=Nibble N0-(0,1); N1-(2,3);
-    extern void notifyXNetTurnout(uint16_t Address, bool straight, bool active, bool unknown)
-      __attribute__((weak)); // data=0000 000A	A=Output (Aktive/Inaktive);
+    extern void notifyXNetTurnout(uint16_t Address, uint8_t state, bool active, bool unknown)
+      __attribute__((weak));
 
     // Feedback:
     extern void notifyXNetFeedback(uint16_t Address, uint8_t data)

@@ -723,8 +723,9 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
 
         uint16_t Address = uint16_t(data1) << 2 | ((data2 & 0b110) >> 1);
         bool active = data2 & 0b1000;
-        bool straight = !(data2 & 0b0001);
+        uint8_t state = (data2 & 0b0001);
 
+/*
         uint8_t msgBuf[10];
         msgBuf[0] = MESSAGE_DUMP;
         msgBuf[1] = 0x52;
@@ -733,13 +734,14 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         msgBuf[4] = 0;
         msgBuf[5] = Address >> 8;
         msgBuf[6] = Address & 0xFF;
-        msgBuf[7] = straight ? 1 : 0;
+        msgBuf[7] = state;
         msgBuf[8] = active ? 1 : 0;
         msgBuf[9] = 0;
         soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 10);
+*/
 
         if (notifyXNetTurnout)
-            notifyXNetTurnout(Address, straight, active, false);
+            notifyXNetTurnout(Address, state, active, false);
 
         /*
         if (notifyXNetTrnt)
@@ -766,8 +768,9 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         uint16_t Address = uint16_t(data1) << 8 | data2;
         Address = Address << 2 | ((data3 & 0b110) >> 1);
         bool active = data3 & 0b1000;
-        bool straight = !(data3 & 0b0001);
+        uint8_t state = (data3 & 0b0001);
 
+/*
         uint8_t msgBuf[11];
         msgBuf[0] = MESSAGE_DUMP;
         msgBuf[1] = 0x53;
@@ -777,13 +780,14 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         msgBuf[5] = 0;
         msgBuf[6] = Address >> 8;
         msgBuf[7] = Address & 0xFF;
-        msgBuf[8] = straight ? 1 : 0;
+        msgBuf[8] = state;
         msgBuf[9] = active ? 1 : 0;
         msgBuf[10] = 0;
         soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 11);
+*/
 
         if (notifyXNetTurnout)
-            notifyXNetTurnout(Address, straight, active, false);
+            notifyXNetTurnout(Address, state, active, false);
 
         /*
         if (notifyXNetTrnt)
@@ -1036,14 +1040,28 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 // 0b11 = Invalid state
 
                 // First turnout is Z1 Z0
-                uint8_t firstStatus = data2 & 0b11;
-                bool firstStraight = firstStatus == 0b10;
-                bool firstUnknown = firstStatus == 0b00 || firstStatus == 0b11;
+                uint8_t firstValue = data2 & 0b11;
+
+                uint8_t firstState = 0;
+                bool firstUnknown = false;
+                if(firstValue == 0b01)
+                  firstState = 0;
+                else if(firstValue == 0b10)
+                  firstState = 1;
+                else
+                  firstUnknown = true;
 
                 // First turnout is Z3 Z2
-                uint8_t secondStatus = (data2 & 0b1100) >> 2;
-                bool secondStraight = secondStatus == 0b10;
-                bool secondUnknown = secondStatus == 0b00 || secondStatus == 0b11;
+                uint8_t secondValue = (data2 & 0b1100) >> 2;
+
+                uint8_t secondState = 0;
+                bool secondUnknown = false;
+                if(secondValue == 0b01)
+                  secondState = 0;
+                else if(secondValue == 0b10)
+                  secondState = 1;
+                else
+                  secondUnknown = true;
 
                 /*
                 uint8_t msgBuf[13];
@@ -1066,9 +1084,9 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
 
                 if (notifyXNetTurnout)
                 {
-                    notifyXNetTurnout(baseAddress, firstStraight, active, firstUnknown);
+                    notifyXNetTurnout(baseAddress, firstState, active, firstUnknown);
 
-                    notifyXNetTurnout(baseAddress + 1, secondStraight, active, secondUnknown);
+                    notifyXNetTurnout(baseAddress + 1, secondState, active, secondUnknown);
                 }
 
                 /*
@@ -1542,6 +1560,16 @@ void XpressNetMasterClass::SetTrntStatus(uint8_t UserOps, uint16_t Address, uint
 // Trnt Change position
 void XpressNetMasterClass::SetTrntPos(uint16_t Address, uint8_t state, uint8_t active)
 {
+  /*
+  Serial.print("XNet set turnout Adr: ");
+  Serial.print(Address);
+  Serial.print(" state: ");
+  Serial.print(state);
+  Serial.print(" active: ");
+  Serial.print(active);
+  Serial.println();
+  */
+    
     // Accessory Decoder operation request (0x52 | AAAA AAAA | 1000 ABBP | XOr)
     // 1. Byte = AAAA AAAA -> (Adresse >> 2) - ohne Stupenauswahl
     // 2. Byte = 1000 ABBP

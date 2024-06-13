@@ -1,5 +1,4 @@
-﻿---
-BasedOnStyle: Microsoft
+﻿BasedOnStyle: Microsoft
 AlignEscapedNewlines: Left
 IndentWidth: '4'
 UseTab: Never
@@ -40,6 +39,6 @@ AlignAfterOpenBracket: true
 
 SortIncludes: false
 
-#InsertNewlineAtEOF: true # Not available before Clang 16
+InsertNewlineAtEOF: true
 
 AlignConsecutiveMacros: AcrossEmptyLines

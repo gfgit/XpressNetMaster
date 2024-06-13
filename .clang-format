@@ -32,10 +32,13 @@ BraceWrapping:
 ContinuationIndentWidth: 2
 
 # Allow indentation for preprocessing directives (if/ifdef/endif). https://reviews.llvm.org/rL312125
-IndentPPDirectives: AfterHash
+IndentPPDirectives: None
 
 # Horizontally align arguments after an open bracket.
 AlignAfterOpenBracket: true
+
+# Class private/public in line with braces
+IndentAccessModifiers: false
 
 SortIncludes: false
 

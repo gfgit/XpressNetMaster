@@ -54,26 +54,26 @@
 
 // Include types & constants of Wiring core API
 #if defined(WIRING)
-#    include <Wiring.h>
+#include <Wiring.h>
 #elif ARDUINO >= 100
-#    include <Arduino.h>
+#include <Arduino.h>
 #else
-#    include <WProgram.h>
+#include <WProgram.h>
 #endif
 
 /* From the ATMega datasheet: */
 //--------------------------------------------------------------------------------------------
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) // Arduino MEGA
-#    define SERIAL_PORT_1
-#    undef SERIAL_PORT_0
+#define SERIAL_PORT_1
+#undef SERIAL_PORT_0
 
 #elif defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega644P__) // Sanguino (other pins!)
-#    define SERIAL_PORT_1
-#    undef SERIAL_PORT_0
+#define SERIAL_PORT_1
+#undef SERIAL_PORT_0
 
 #else // others Arduino UNO
-#    define SERIAL_PORT_0
-#    undef SERIAL_PORT_1
+#define SERIAL_PORT_0
+#undef SERIAL_PORT_1
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -96,9 +96,9 @@
  */
 
 #if defined(ESP8266) || defined(ESP32)
-#    define XNetTransmissionWindow 3000 // wait longer = slower, because software serial interrupt
+#define XNetTransmissionWindow 3000 // wait longer = slower, because software serial interrupt
 #else
-#    define XNetTransmissionWindow 500 // max time to wait until data will be received
+#define XNetTransmissionWindow 500 // max time to wait until data will be received
 #endif
 
 // XpressNet Buffer length (send and receive):

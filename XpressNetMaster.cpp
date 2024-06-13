@@ -30,11 +30,11 @@
 #include "XpressNetMaster.h"
 
 #if defined(__AVR__)
-#    include <avr/interrupt.h>
+#include <avr/interrupt.h>
 XpressNetMasterClass *XpressNetMasterClass::active_object = 0; // Static
 
 #elif defined(ESP8266) || defined(ESP32)
-#    include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 SoftwareSerial XNetSwSerial;
 #endif
 
@@ -152,25 +152,25 @@ void XpressNetMasterClass::setup(uint8_t FStufen, uint8_t XControl,
 
     // Set up on 62500 Baud
     cli(); // disable interrupts while initializing the USART
-#    if defined(__AVR_ATmega328p__)
+#if defined(__AVR_ATmega328p__)
     UBRRH = 0;
     UBRRL = 0x0F;
     UCSRA = 0;
     UCSRB = (1 << RXEN) | (1 << TXEN) | (1 << RXCIE) | (1 << TXCIE) | (1 << UCSZ2);
     UCSRC = (1 << UCSZ1) | (1 << UCSZ0);
-#    elif defined(SERIAL_PORT_0)
+#elif defined(SERIAL_PORT_0)
     UBRR0H = 0;
     UBRR0L = 0x0F;
     UCSR0A = 0;
     UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0) | (1 << TXCIE0) | (1 << UCSZ02);
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
-#    else
+#else
     UBRR1H = 0;
     UBRR1L = 0x0F;
     UCSR1A = 0;
     UCSR1B = (1 << RXEN1) | (1 << TXEN1) | (1 << RXCIE1) | (1 << TXCIE1) | (1 << UCSZ12);
     UCSR1C = (1 << UCSZ11) | (1 << UCSZ10);
-#    endif
+#endif
     sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed
            /*
             *  Enable reception (RXEN = 1).
@@ -725,20 +725,20 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         bool active = data2 & 0b1000;
         uint8_t state = (data2 & 0b0001);
 
-/*
-        uint8_t msgBuf[10];
-        msgBuf[0] = MESSAGE_DUMP;
-        msgBuf[1] = 0x52;
-        msgBuf[2] = data1;
-        msgBuf[3] = data2;
-        msgBuf[4] = 0;
-        msgBuf[5] = Address >> 8;
-        msgBuf[6] = Address & 0xFF;
-        msgBuf[7] = state;
-        msgBuf[8] = active ? 1 : 0;
-        msgBuf[9] = 0;
-        soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 10);
-*/
+        /*
+                uint8_t msgBuf[10];
+                msgBuf[0] = MESSAGE_DUMP;
+                msgBuf[1] = 0x52;
+                msgBuf[2] = data1;
+                msgBuf[3] = data2;
+                msgBuf[4] = 0;
+                msgBuf[5] = Address >> 8;
+                msgBuf[6] = Address & 0xFF;
+                msgBuf[7] = state;
+                msgBuf[8] = active ? 1 : 0;
+                msgBuf[9] = 0;
+                soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 10);
+        */
 
         if (notifyXNetTurnout)
             notifyXNetTurnout(Address, state, active, false);
@@ -770,21 +770,21 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         bool active = data3 & 0b1000;
         uint8_t state = (data3 & 0b0001);
 
-/*
-        uint8_t msgBuf[11];
-        msgBuf[0] = MESSAGE_DUMP;
-        msgBuf[1] = 0x53;
-        msgBuf[2] = data1;
-        msgBuf[3] = data2;
-        msgBuf[4] = data3;
-        msgBuf[5] = 0;
-        msgBuf[6] = Address >> 8;
-        msgBuf[7] = Address & 0xFF;
-        msgBuf[8] = state;
-        msgBuf[9] = active ? 1 : 0;
-        msgBuf[10] = 0;
-        soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 11);
-*/
+        /*
+                uint8_t msgBuf[11];
+                msgBuf[0] = MESSAGE_DUMP;
+                msgBuf[1] = 0x53;
+                msgBuf[2] = data1;
+                msgBuf[3] = data2;
+                msgBuf[4] = data3;
+                msgBuf[5] = 0;
+                msgBuf[6] = Address >> 8;
+                msgBuf[7] = Address & 0xFF;
+                msgBuf[8] = state;
+                msgBuf[9] = active ? 1 : 0;
+                msgBuf[10] = 0;
+                soft_write2(XNetSerialMock, (uint8_t *)&msgBuf, 11);
+        */
 
         if (notifyXNetTurnout)
             notifyXNetTurnout(Address, state, active, false);
@@ -1044,24 +1044,24 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
 
                 uint8_t firstState = 0;
                 bool firstUnknown = false;
-                if(firstValue == 0b01)
-                  firstState = 0;
-                else if(firstValue == 0b10)
-                  firstState = 1;
+                if (firstValue == 0b01)
+                    firstState = 0;
+                else if (firstValue == 0b10)
+                    firstState = 1;
                 else
-                  firstUnknown = true;
+                    firstUnknown = true;
 
                 // First turnout is Z3 Z2
                 uint8_t secondValue = (data2 & 0b1100) >> 2;
 
                 uint8_t secondState = 0;
                 bool secondUnknown = false;
-                if(secondValue == 0b01)
-                  secondState = 0;
-                else if(secondValue == 0b10)
-                  secondState = 1;
+                if (secondValue == 0b01)
+                    secondState = 0;
+                else if (secondValue == 0b10)
+                    secondState = 1;
                 else
-                  secondUnknown = true;
+                    secondUnknown = true;
 
                 /*
                 uint8_t msgBuf[13];
@@ -1560,16 +1560,16 @@ void XpressNetMasterClass::SetTrntStatus(uint8_t UserOps, uint16_t Address, uint
 // Trnt Change position
 void XpressNetMasterClass::SetTrntPos(uint16_t Address, uint8_t state, uint8_t active)
 {
-  /*
-  Serial.print("XNet set turnout Adr: ");
-  Serial.print(Address);
-  Serial.print(" state: ");
-  Serial.print(state);
-  Serial.print(" active: ");
-  Serial.print(active);
-  Serial.println();
-  */
-    
+    /*
+    Serial.print("XNet set turnout Adr: ");
+    Serial.print(Address);
+    Serial.print(" state: ");
+    Serial.print(state);
+    Serial.print(" active: ");
+    Serial.print(active);
+    Serial.println();
+    */
+
     // Accessory Decoder operation request (0x52 | AAAA AAAA | 1000 ABBP | XOr)
     // 1. Byte = AAAA AAAA -> (Adresse >> 2) - ohne Stupenauswahl
     // 2. Byte = 1000 ABBP
@@ -1698,22 +1698,22 @@ byte XpressNetMasterClass::callByteParity(byte me)
 //--------------------------------------------------------------------------------------------
 #if defined(__AVR__)
 // Interrupt routine for writing via Serial
-#    if defined(__AVR_ATmega8__)
+#if defined(__AVR_ATmega8__)
 ISR(USART_TX_vect)
 {
     XpressNetMasterClass::handle_TX_interrupt(); // weiterreichen an die Funktion
 }
-#    elif defined(SERIAL_PORT_0)
+#elif defined(SERIAL_PORT_0)
 ISR(USART_TX_vect)
 {
     XpressNetMasterClass::handle_TX_interrupt(); // weiterreichen an die Funktion
 }
-#    else
+#else
 ISR(USART1_TX_vect)
 {
     XpressNetMasterClass::handle_TX_interrupt(); // weiterreichen an die Funktion
 }
-#    endif
+#endif
 
 // Interrupt handling for receive Data
 // static
@@ -1763,7 +1763,7 @@ void XpressNetMasterClass::XNetSendData(void)
     digitalWrite(MAX485_CONTROL, HIGH); // SEND_MODE
 
 #if defined(__AVR__)
-#    ifdef __AVR_ATmega8__
+#ifdef __AVR_ATmega8__
     /* wait for empty transmit buffer */
     // while (!(UCSR0A & (1 << UDRE0))) {}
     /* put the data into buffer, and send */
@@ -1771,7 +1771,7 @@ void XpressNetMasterClass::XNetSendData(void)
     if (data9 & 0x100) // is there a 9th bit?
         UCSRB |= (1 << TXB8);
     UDR = data9;
-#    elif defined(SERIAL_PORT_0)
+#elif defined(SERIAL_PORT_0)
     /* wait for empty transmit buffer */
     // while (!(UCSR0A & (1 << UDRE0))) {}
     /* put the data into buffer, and send */
@@ -1779,7 +1779,7 @@ void XpressNetMasterClass::XNetSendData(void)
     if (data9 & 0x100) // is there a 9th bit?
         UCSR0B |= (1 << TXB80);
     UDR0 = data9;
-#    else
+#else
     /* wait for empty transmit buffer */
     // while (!(UCSR1A & (1 << UDRE1))) {}
     /* put the data into buffer, and send */
@@ -1787,7 +1787,7 @@ void XpressNetMasterClass::XNetSendData(void)
     if (data9 & 0x100) // is there a 9th bit?
         UCSR1B |= (1 << TXB81);
     UDR1 = data9;
-#    endif
+#endif
 
 #elif defined(ESP8266) || defined(ESP32)
 
@@ -1848,23 +1848,23 @@ uint16_t XpressNetMasterClass::XNetReadBuffer()
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 // Interrupt routine for reading via Serial
-#    ifdef __AVR_ATmega8__
+#ifdef __AVR_ATmega8__
 ISR(USART_RX_vect)
 {
     XpressNetMasterClass::handle_RX_interrupt(); // weiterreichen an die Funktion
 }
-#    elif defined(SERIAL_PORT_0)
+#elif defined(SERIAL_PORT_0)
 ISR(USART_RX_vect)
 {
     XpressNetMasterClass::handle_RX_interrupt(); // weiterreichen an die Funktion
 }
 
-#    else
+#else
 ISR(USART1_RX_vect)
 {
     XpressNetMasterClass::handle_RX_interrupt(); // weiterreichen an die Funktion
 }
-#    endif
+#endif
 
 // Interrupt handling for receive Data
 // static
@@ -1884,7 +1884,7 @@ void XpressNetMasterClass::XNetReceive(void)
 #if defined(__AVR__)
 
 // if there's any serial available, read it:
-#    ifdef __AVR_ATmega8__
+#ifdef __AVR_ATmega8__
     // Filter the 9th bit, then return
     if (UCSRB & (1 << RXB8))
     {
@@ -1907,7 +1907,7 @@ void XpressNetMasterClass::XNetReceive(void)
         XNetRXBuffer.msg[XNetRXBuffer.put].data[XNetRXBuffer.msg[XNetRXBuffer.put].length] =
           UDR; // Zeichen aus UDR an Aufrufer zurueckgeben
     }
-#    elif defined(SERIAL_PORT_0)
+#elif defined(SERIAL_PORT_0)
     // Filter the 9th bit, then return
     if (UCSR0B & (1 << RXB80))
     {
@@ -1930,7 +1930,7 @@ void XpressNetMasterClass::XNetReceive(void)
         XNetRXBuffer.msg[XNetRXBuffer.put].data[XNetRXBuffer.msg[XNetRXBuffer.put].length] =
           UDR0; // Zeichen aus UDR an Aufrufer zurueckgeben
     }
-#    else
+#else
     // Filter the 9th bit, then return
     if (UCSR1B & (1 << RXB81))
     {
@@ -1953,7 +1953,7 @@ void XpressNetMasterClass::XNetReceive(void)
         XNetRXBuffer.msg[XNetRXBuffer.put].data[XNetRXBuffer.msg[XNetRXBuffer.put].length] =
           UDR1; // Zeichen aus UDR an Aufrufer zurueckgeben
     }
-#    endif
+#endif
 #elif defined(ESP8266) || defined(ESP32)
     if (XNetSwSerial.available())
     { // If anything comes in Serial
@@ -1974,12 +1974,12 @@ void XpressNetMasterClass::XNetReceive(void)
         }
         else
         {
-#    if defined(XNetDEBUG)
+#if defined(XNetDEBUG)
             XNetSerial.print(XNetRXBuffer.msg[XNetRXBuffer.put].length + 1);
             XNetSerial.print("-");
             XNetSerial.print(data, HEX);
             XNetSerial.print(" ");
-#    endif
+#endif
 
             XNetRXBuffer.msg[XNetRXBuffer.put].length++; // weitere Nachrichtendaten
             XNetRXBuffer.msg[XNetRXBuffer.put].data[XNetRXBuffer.msg[XNetRXBuffer.put].length] =

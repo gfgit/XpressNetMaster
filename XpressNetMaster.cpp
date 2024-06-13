@@ -236,14 +236,15 @@ bool XpressNetMasterClass::update(void)
 #endif
         // XNetDataReady = false;
         if (XNetCheckXOR())
-        { // Checks the XOR
+        {
+            // Checks the XOR
 #if defined(XNetDEBUGTime)
             XNetSerial.println(" OK");
 #endif
-            XNetAnalyseReceived(); // Auswerten der empfangenen Daten
+            XNetAnalyseReceived(); // Analysing the received data
         }
 
-        XNetRXclear(XNetRXBuffer.get); // alte Nachricht l�schen
+        XNetRXclear(XNetRXBuffer.get); // Delete old message
 
         XNetRXBuffer.get++;
         if (XNetRXBuffer.get >= XNetBufferSize) // overflow?
@@ -265,7 +266,7 @@ bool XpressNetMasterClass::update(void)
     { // MASTER MODE
         if ((micros() - XSendCount) > XNetTransmissionWindow)
         {
-            XNetRXclear(XNetRXBuffer.put); // alte Nachricht l�schen
+            XNetRXclear(XNetRXBuffer.put); // Delete old message
             getNextXNetAdr();              // Send next CallByte
             XNetSendData();                // start sending out by interrupt
             XSendCount = micros();         // save time last Data on Bus!
@@ -338,9 +339,10 @@ bool XpressNetMasterClass::XNetCheckXOR(void)
 }
 
 //--------------------------------------------------------------------------------------------
-// Daten Auswerten
+// Analyse data
 void XpressNetMasterClass::XNetAnalyseReceived(void)
-{ // work on received data
+{
+    // work on received data
 
 #if defined(XNetDEBUG)
 
@@ -365,11 +367,13 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
     switch (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetheader])
     {
     case 0x21:
+    {
         if (XNetSlaveMode == 0x00)
         {
             if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x24
                 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] == 0x05)
-            { // Command station status indication response
+            {
+                // Command station status indication response
                 /*
                 Bit 0: =1 - Command station is in emergency off (Nothalt)
                 Bit 1: =1 - Command station is in emergency stop (Notaus)
@@ -406,7 +410,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
             }
             if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x21
                 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] == 0x00)
-            { // Command station softwareversion response
+            {
+                // Command station software version response
                 uint8_t sendVersion[] = {DirectedOps, 0x63,   0x21,
                                          XNetVersion, XNetID, 0x00}; // 63-21 36 0 74
                 getXOR(sendVersion, 6);
@@ -414,7 +419,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
             }
             if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x80
                 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] == 0xA1)
-            { // Alles Aus (Notaus)
+            {
+                // All off (emergency stop)
                 // Track power off
                 Railpower = csTrackVoltageOff;
                 if (notifyXNetPower)
@@ -422,7 +428,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
             }
             if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x81
                 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] == 0xA0)
-            { // Alles An
+            {
+                // All on
                 // Normal Operation Resumed
                 Railpower = csNormal;
                 if (notifyXNetPower)
@@ -430,7 +437,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
             }
             if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x10
                 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] == 0x31)
-            { // Request for Service Mode results
+            {
+                // Request for Service Mode results
                 if (XNetCVAdr != 0)
                 {
                     uint8_t sendStatus[] = {
@@ -457,11 +465,14 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 }
             }
             if (SlotLokUse[DirectedOps & 0x1F] == 0xFFFF)
-                SlotLokUse[DirectedOps & 0x1F] = 0; // mark Slot as activ
-                                                    // XNetclear();	//alte Nachricht l�schen
+                SlotLokUse[DirectedOps & 0x1F] = 0; // mark Slot as active
+                                                    // XNetclear();	//Delete old message
         }
         break;
-    case 0x22: // Start Programming
+    }
+    case 0x22:
+    {
+        // Start Programming
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x11)
         { // Register Mode read request (Register Mode)
         }
@@ -477,10 +488,12 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                                        - 1); // try to read the CV 1..255
             break;
         }
-        unknown(); // unbekannte Anfrage
-        // XNetclear();	//alte Nachricht l�schen
+        unknown(); // Unknown Enquiry
+        // XNetclear();	//Delete old message
         break;
+    }
     case 0x23:
+    {
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x12)
         { // Register Mode write request (Register Mode)
         }
@@ -496,11 +509,13 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x17)
         { // 0x23 0x17 CV DAT[XOR] - Paged Mode write request(Paged mode)
         }
-        unknown(); // unbekannte Anfrage
+        unknown(); // Unknown Enquiry
         // XNetclear();
         break;
+    }
     case 0xE6:
-    { // POM CV write MultiMaus
+    {
+        // POM CV write MultiMaus
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x30)
         {
             uint16_t Adr = ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F) << 8)
@@ -523,70 +538,86 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         break;
     }
     case 0x80:
+    {
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x80)
-        { // EmStop
+        {
+            // EmStop
             // Emergency Stop
             Railpower = csEmergencyStop;
             if (notifyXNetPower)
                 notifyXNetPower(Railpower);
             break;
         }
-        unknown(); // unbekannte Anfrage
-        // XNetclear();	//alte Nachricht l�schen
+        unknown(); // Unknown Enquiry
+        // XNetclear();	//Delete old message
         break;
+    }
     case 0xE3:
     {
         if (XNetSlaveMode == 0x00)
         {
             switch (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1])
             {
-            case 0x00: // Lokdaten anfordern & F0 bis F12 anfordern
+            case 0x00:
+            {
+                // Request locomotive data & request F0 to F12
                 if (notifyXNetgiveLocoInfo)
                     notifyXNetgiveLocoInfo(
                       DirectedOps, word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                         XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]));
                 break;
+            }
             case 0x07:
-            { // Funktionsstatus F0 bis F12 anfordern (Funktion ist tastend oder nicht tastend)
-                // 0x07, sonst ist LokMaus2 langsam!
+            {
+                // Request function status F0 to F12 (function is momentary or non-momentary)
+                // 0x07, otherwise LokMaus2 is slow!
                 uint8_t LocoFkt[] = {DirectedOps, 0xE3, 0x50, 0x00, 0x00, 0x00};
                 getXOR(LocoFkt, 6);
                 XNetsend(LocoFkt, 6);
                 break;
             }
             case 0x08:
-            { // Funktionsstatus F13 bis F28 anfordern (Funktion ist tastend oder nicht tastend)
+            {
+                // Request function status F13 to F28 (function is momentary or non-momentary)
                 uint8_t LocoFkt[] = {DirectedOps, 0xE3, 0x51, 0x00, 0x00, 0x00};
                 getXOR(LocoFkt, 6);
                 XNetsend(LocoFkt, 6);
                 break;
             }
-            case 0x09: // Funktionszustand F13 bis F28 anfordern
+            case 0x09:
+            {
+                // Request functional status F13 to F28
                 if (notifyXNetgiveLocoFunc)
                     notifyXNetgiveLocoFunc(
                       DirectedOps, word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                         XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]));
                 break;
-            case 0xF0: // Lok und Funktionszustand MultiMaus anfordern
+            }
+            case 0xF0:
+            {
+                // Request locomotive and functional status MultiMaus
                 if (notifyXNetgiveLocoMM)
                     notifyXNetgiveLocoMM(
                       DirectedOps, word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                         XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]));
                 break;
+            }
             default:
-                unknown(); // unbekannte Anfrage
+                unknown(); // Unknown Enquiry
             }
         }
-        // XNetclear();	//alte Nachricht l�schen
+        // XNetclear();	//Delete old message
         break;
     }
     case 0xE4:
-    { // Fahrbefehle
+    {
+        // Drive commands
         AddBusySlot(DirectedOps,
                     word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3])); // set Busy
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x10)
-        { // 14 Fahrstufen
+        {
+            // 14 Speed steps
             if (notifyXNetLocoDrive14)
                 notifyXNetLocoDrive14(
                   word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
@@ -594,7 +625,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                   XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x11)
-        { // 27 Fahrstufen
+        {
+            // 27 Speed steps
             if (notifyXNetLocoDrive27)
                 notifyXNetLocoDrive27(
                   word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
@@ -602,7 +634,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                   XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x12)
-        { // 28 Fahrstufen
+        {
+            // 28 Speed steps
             if (notifyXNetLocoDrive28)
                 notifyXNetLocoDrive28(
                   word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
@@ -610,7 +643,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                   XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x13)
-        { // 128 Fahrstufen
+        {
+            // 128 Speed steps
             if (notifyXNetLocoDrive128)
                 notifyXNetLocoDrive128(
                   word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
@@ -618,21 +652,24 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                   XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x20)
-        { // Funktionsbefehl Gruppe1 0 0 0 F0 F4 F3 F2 F1
+        {
+            // Function command Group1 0 0 0 F0 F4 F3 F2 F1
             if (notifyXNetLocoFunc1)
                 notifyXNetLocoFunc1(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x21)
-        { // Funktionsbefehl Gruppe2 0000 F8 F7 F6 F5
+        {
+            // Function command Group2 0000 F8 F7 F6 F5
             if (notifyXNetLocoFunc2)
                 notifyXNetLocoFunc2(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x22)
-        { // Funktionsbefehl Gruppe3 0000 F12 F11 F10 F9
+        {
+            // Function command Group3 0000 F12 F11 F10 F9
             if (notifyXNetLocoFunc3)
                 notifyXNetLocoFunc3(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
@@ -640,84 +677,100 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x23
                  || XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0xF3)
-        { // Funktionsbefehl Gruppe4 F20-F13
-            // 0xF3 = undocumented command is used when a mulitMAUS is controlling functions
-            // f20..f13.
+        {
+            // Function command Group4 F20-F13
+            // 0xF3 = undocumented command is used when a mulitMAUS
+            // is controlling functions f20..f13.
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x04, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x28)
-        { // Funktionsbefehl Gruppe5 F28-F21
+        {
+            // Function command Group5 F28-F21
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x05, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x29)
-        { // Funktionsbefehl Gruppe6 F36-F29
+        {
+            // Function command Group6 F36-F29
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x06, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x2A)
-        { // Funktionsbefehl Gruppe7 F37-F44
+        {
+            // Function command Group7 F37-F44
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x07, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x2B)
-        { // Funktionsbefehl Gruppe8 F45-F52
+        {
+            // Function command Group8 F45-F52
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x08, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x50)
-        { // Funktionsbefehl Gruppe9 F53-F60
+        {
+            // Function command Group9 F53-F60
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x09, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x51)
-        { // Funktionsbefehl Gruppe10 F61-F68
+        {
+            // // Function command Group10 F61-F68
             if (notifyXNetLocoFuncX)
                 notifyXNetLocoFuncX(word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
                                          XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]),
                                     0x0A, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4]);
         }
         else
-            unknown(); // unbekannte Anfrage
+            unknown(); // Unknown Enquiry
         /*
-        if (XNetSlaveMode == 0x00)	{	//we are the MASTER
-            //f�r MultiMaus als R�ckmeldung:
+        if (XNetSlaveMode == 0x00)
+        {
+            //we are the MASTER
+            //For MultiMaus as feedback:
             if (notifyXNetgiveLocoMM)
                 notifyXNetgiveLocoMM(DirectedOps,
-        word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
-        XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]));
+                                     word(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & 0x3F,
+                                     XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]));
         }
         */
         break;
     }
-    case 0x42: // Accessory Decoder information request
+    case 0x42:
+    {
+        // Accessory Decoder information request
         if (notifyXNetTrntInfo && XNetSlaveMode == 0x00)
             notifyXNetTrntInfo(DirectedOps, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1],
                                XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
-        // XNetclear();	//alte Nachricht l�schen
+        // XNetclear();	//Delete old message
         break;
-    case 0x43: // Accessory Decoder >1024 information request
+    }
+    case 0x43:
+    {
+        // Accessory Decoder >1024 information request
         if (notifyXNetTrntInfo && XNetSlaveMode == 0x00)
             notifyXNetTrntInfo(DirectedOps,
                                (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 8)
                                  | XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2],
                                XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
         break;
-    case 0x52: // Accessory Decoder operation request
+    }
+    case 0x52:
     {
+        // Accessory Decoder operation request
         uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
         uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
 
@@ -758,8 +811,9 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
 
         break;
     }
-    case 0x53: // Accessory Decoder >1024 operation request ab Version 3.8
+    case 0x53:
     {
+        // Accessory Decoder >1024 operation request ab Version 3.8
         // TODO: fix
         uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
         uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
@@ -805,9 +859,11 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
     }
 
     if (XNetSlaveMode != 0x00)
-    { // SLAVE-MODE
+    {
+        // SLAVE-MODE
         if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetCallByte] == GENERAL_BROADCAST)
-        { // Central Station broadcast data
+        {
+            // Central Station broadcast data
             if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetheader] == 0x61)
             {
                 if ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x01)
@@ -855,7 +911,7 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
             }
             else if ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetheader] & 0xF0) == 0x40)
             {
-                // R�ckmeldung Schaltinformation
+                // Feedback switching information
                 byte len = (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetheader] & 0x0F)
                            / 2; // each Adr and Data
                 if (notifyXNetFeedback)
@@ -888,19 +944,23 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
             }
         } // Broadcast END
         else if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetCallByte] == ACK_REQ)
-        { // Central Station ask client for ACK?
+        {
+            // Central Station ask client for ACK?
             uint8_t AckSeq[] = {0x00, 0x20, 0x20};
             XNetsend(AckSeq, 3);
         } // ACK END
         else
-        { // Central Station send data ...
+        {
+            // Central Station send data ...
             switch (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetheader])
             {
             case 0x52: // Some other device asked for an accessory change
                 break;
-            case 0x61: // Zustand
+            case 0x61: // Status
                 break;
-            case 0x62: // Version
+            case 0x62:
+            {
+                // Version
                 if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x22)
                 {
                     switch (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2])
@@ -928,27 +988,33 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                     }
                     if (XNetSlaveInit == 2)
                     {
-                        XNetSlaveInit = 0xFF; // init Fertig!
+                        XNetSlaveInit = 0xFF; // Init Done!
                     }
                 }
                 break;
+            }
             case 0x63:
+            {
                 if (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x21)
                 {
-                    // x1FF 0x63 0x21 0x36 0x13 0x67		Version der Zentrale
+                    // x1FF 0x63 0x21 0x36 0x13 0x67 Version of the control centre
                     if (XNetSlaveInit == 1)
                     {
-                        XNetSlaveInit = 2; // init Fertig!
-                        // starte 2. Stufe
-                        // Slave Init Softwareversion anfragen:
+                        XNetSlaveInit = 2; // Init Done!
+                        // start 2nd stage
+                        // Slave Init software version request:
                         getStatus(); // 0x21, 0x24, 0x05
                     }
                 }
                 break;
-            case 0xE3: // Antwort abgefrage Funktionen F13-F28
+            }
+            case 0xE3:
+            {
+                // Response queried Functions F13-F28
                 if (SlaveRequestLocoFkt != 0
                     && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x52)
-                { // save Loco and KENNUNG
+                {
+                    // save Loco and Indentification
                     if (notifyXNetLocoFuncX)
                     {
                         notifyXNetLocoFuncX(SlaveRequestLocoFkt, 0x04,
@@ -959,11 +1025,26 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                     SlaveRequestLocoFkt = 0; // reset
                 }
                 break;
-            case 0xE4: // Antwort der abgefragen Lok
-                if (SlaveRequestLocoInfo != 0)
-                { // save Loco
-                    switch (XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1])
-                    { // KENNUNG
+            }
+            case 0xE4:
+            {
+                /* Response from the queried locomotive
+                 * Identification (Kennung) format is: 0000 BFFF
+                 * B = 1 (Loco Busy) / 0 (Loco free)
+                 * FFF = 001 (14 steps) / 010 (28 Steps) / 100 (128 steps)
+                 *
+                 * We need to distinguish this from other Drive commands
+                 * which share same header byte (0xE4) but all have identification
+                 * with last bits set in a way that identification (KENNUNG) > 0xF
+                 */
+
+                uint8_t identification = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+                if (SlaveRequestLocoInfo != 0 && identification <= 0xF)
+                {
+                    // save Loco
+                    // Indentification
+                    switch (identification)
+                    {
                     case 0x00:
                         if (notifyXNetLocoDrive14)
                             notifyXNetLocoDrive14(
@@ -1004,7 +1085,8 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                 }
                 if (SlaveRequestLocoFkt != 0
                     && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x51)
-                { // LENZ only F13-F28
+                {
+                    // LENZ only F13-F28
                     if (notifyXNetLocoFuncX)
                     {
                         notifyXNetLocoFuncX(SlaveRequestLocoFkt, 0x04,
@@ -1015,8 +1097,10 @@ void XpressNetMasterClass::XNetAnalyseReceived(void)
                     SlaveRequestLocoFkt = 0; // reset
                 }
                 break;
-            case 0x42: // Answer switch information request
+            }
+            case 0x42:
             {
+                // Answer switch information request
                 uint8_t data1 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
                 uint8_t data2 = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2];
 

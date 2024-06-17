@@ -311,7 +311,8 @@ bool XpressNetMasterClass::XNetCheckXOR(void)
         rxXOR = rxXOR ^ XNetRXBuffer.msg[XNetRXBuffer.get].data[i + 1]; // jump over CallByte
     }
     if (rxXOR == 0x00)
-    { // XOR is 0x00!
+    {
+        // XOR is 0x00!
         return true;
     }
 
@@ -329,9 +330,10 @@ bool XpressNetMasterClass::XNetCheckXOR(void)
     XNetSerial.println();
 #endif
 
-    // �bertragungsfehler:
+    // Transmission error:
     if (XNetSlaveMode == 0x00)
-    { // MASTER MODE
+    {
+        // MASTER MODE
         uint8_t ERR[] = {DirectedOps, 0x61, 0x80, 0xE1};
         XNetsend(ERR, 4);
     }
@@ -1206,7 +1208,8 @@ bool XpressNetMasterClass::getOperationModeMaster(void)
 void XpressNetMasterClass::unknown(void) // Unknown Request
 {
     if (XNetSlaveMode == 0x00)
-    { // MASTER MODE
+    {
+        // MASTER MODE
         uint8_t NotIn[] = {DirectedOps, 0x61, 0x82, 0xE3};
         XNetsend(NotIn, 4);
     }
@@ -1215,9 +1218,9 @@ void XpressNetMasterClass::unknown(void) // Unknown Request
 //--------------------------------------------------------------------------------------------
 void XpressNetMasterClass::getNextXNetAdr(void)
 {
-    XNetAdr++; // n�chste Adresse im XNet
+    XNetAdr++; // Next address in XNet
     if (XNetAdr == 0)
-        XNetAdr++; // n�chste Adresse im XNet 1..31 only!
+        XNetAdr++; // Next address in XNet 1..31 only!
     uint8_t TempAdr = XNetAdr % 32;
 
     if (XNetAdr > 31)
@@ -1226,7 +1229,7 @@ void XpressNetMasterClass::getNextXNetAdr(void)
         while ((SlotLokUse[TempAdr % 32] == 0xFFFF) && (TempAdr <= 31))
         { // slot used an loco address?
             TempAdr++;
-            XNetAdr++; // n�chste Adresse im XNet
+            XNetAdr++; // Next address in XNet
         }
         if ((TempAdr % 32) == 0)
             TempAdr = 1; // start at the beginning
@@ -1380,8 +1383,17 @@ void XpressNetMasterClass::getStatus()
 
 //--------------------------------------------------------------------------------------------
 // Lokinfo an XNet abfragen
-void XpressNetMasterClass::getLocoInfo(uint16_t Adr)
+bool XpressNetMasterClass::getLocoInfo(uint16_t Adr)
 {
+    if (SlaveRequestLocoInfo != 0)
+    {
+        // Another request is still pending, ignore new request
+        // NOTE: XNet reply does not contain loco address,
+        // so if 2 request are pending it's impossible to tell to which
+        // the answer was directed.
+        return false;
+    }
+
     uint8_t LocoInfo[] = {0x00, 0xE3, 0x00, 0x00, 0x00, 0x00};
     if (Adr > 99) // Xpressnet long addresses (100 to 9999: AH/AL = 0xC064 to 0xE707)
         LocoInfo[3] = (Adr >> 8) | 0xC0;
@@ -1391,6 +1403,7 @@ void XpressNetMasterClass::getLocoInfo(uint16_t Adr)
     getXOR(LocoInfo, 6);
     XNetsend(LocoInfo, 6);
     SlaveRequestLocoInfo = Adr; // save Loco
+    return true;
 }
 
 //--------------------------------------------------------------------------------------------

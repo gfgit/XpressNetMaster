@@ -179,8 +179,13 @@ class XpressNetMasterClass
     void ReqLocoBusy(uint16_t Adr);                  // Report locomotive address occupied
     void SetLocoBusy(uint8_t UserOps, uint16_t Adr); // Locomotive address occupied
 
-    void getStatus();               // Request Command Station status
-    void getLocoInfo(uint16_t Adr); // Slave requests Locomotive information
+    void getStatus(); // Request Command Station status
+
+    /* Slave requests Locomotive information
+     * Returns false if another loco info request was already active (waiting for reply)
+     * And so the new request was ignored
+     */
+    bool getLocoInfo(uint16_t Adr); // Slave requests Locomotive information
     void getLocoFkt(uint16_t Adr);  // Slave requests Locomotive function information
 
     void SetLocoInfo(uint8_t UserOps, uint8_t Speed, uint8_t F0,

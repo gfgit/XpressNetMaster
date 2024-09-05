@@ -960,9 +960,9 @@ void XpressNetMasterClass::setSpeed(uint16_t Adr, uint8_t Steps, uint8_t Speed) 
 	}
 	uint8_t LocoInfo[] = {0x00, 0xE4, 0x13, 0x00, 0x00, v, 0x00 }; //default to 128 Steps!
 	switch (Steps) {
-		case 14: LocoInfo[2] = 0x10; break;
-		case 27: LocoInfo[2] = 0x11; break;
-		case 28: LocoInfo[2] = 0x12; break;
+        case Loco14: LocoInfo[2] = 0x10; break;
+        case Loco27: LocoInfo[2] = 0x11; break;
+        case Loco28: LocoInfo[2] = 0x12; break;
 	}
 	if (Adr > 99) //Xpressnet long addresses (100 to 9999: AH/AL = 0xC064 to 0xE707)
 		LocoInfo[3] = (Adr >> 8) | 0xC0;

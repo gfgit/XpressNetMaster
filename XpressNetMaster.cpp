@@ -666,39 +666,59 @@ void XpressNetMasterClass::XNetAnalyseReceived(void) {		//work on received data
 							SlaveRequestLocoFkt = 0; 	//reset
 						}
 						break;
-				case 0xE4:	//Antwort der abgefragen Lok
-						if (SlaveRequestLocoInfo != 0) {		//save Loco
-							switch(XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1]) {		//KENNUNG
-								case 0x00: 	if (notifyXNetLocoDrive14)
-												notifyXNetLocoDrive14(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
-											break;	//14 steps
-								case 0x01: 	if (notifyXNetLocoDrive27)
-												notifyXNetLocoDrive27(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
-											break;	//17 steps			
-								case 0x02:	if (notifyXNetLocoDrive28)
-												notifyXNetLocoDrive28(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
-											break;	//28 steps
-								case 0x04:  if (notifyXNetLocoDrive128)
-												notifyXNetLocoDrive128(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
-											break;	//128 steps
-							}
-							if (notifyXNetLocoFunc1)
-								notifyXNetLocoFunc1(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
-							if (notifyXNetLocoFunc2)
-								notifyXNetLocoFunc2(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4] & 0x0F);
-							if (notifyXNetLocoFunc3)
-								notifyXNetLocoFunc3(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4] >> 4);
-							SlaveRequestLocoInfo = 0;		//reset
-						}
-						if (SlaveRequestLocoFkt != 0 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x51) {		//LENZ only F13-F28
-							if (notifyXNetLocoFuncX) {
-								notifyXNetLocoFuncX(SlaveRequestLocoFkt, 0x04, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
-								notifyXNetLocoFuncX(SlaveRequestLocoFkt, 0x05, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
-							}
-							SlaveRequestLocoFkt = 0; 	//reset
-						}
-						break;
-				case 0x42:	//Antwort Schaltinformation
+                case 0xE4:
+                {
+                    /* Response for the queried locomotive
+                     * Identification (Kennung) format is: 0000 BFFF
+                     * B = 1 (Loco Busy) / 0 (Loco free)
+                     * FFF = 001 (14 steps) / 010 (28 Steps) / 100 (128 steps)
+                     *
+                     * We need to distinguish this from other Drive commands
+                     * which share same header byte (0xE4) but all have identification
+                     * with last bits set in a way that identification (KENNUNG) > 0xF
+                     */
+
+                    uint8_t identification = XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1];
+                    if (SlaveRequestLocoInfo != 0 && identification <= 0xF)
+                    {
+                        // save Loco
+                        // Indentification
+                        switch (identification)
+                        {
+                        case 0x00: 	if (notifyXNetLocoDrive14)
+                                        notifyXNetLocoDrive14(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+                                    break;	//14 steps
+                        case 0x01: 	if (notifyXNetLocoDrive27)
+                                        notifyXNetLocoDrive27(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+                                    break;	//17 steps
+                        case 0x02:	if (notifyXNetLocoDrive28)
+                                        notifyXNetLocoDrive28(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+                                    break;	//28 steps
+                        case 0x04:  if (notifyXNetLocoDrive128)
+                                        notifyXNetLocoDrive128(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+                                    break;	//128 steps
+                        }
+                        if (notifyXNetLocoFunc1)
+                            notifyXNetLocoFunc1(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
+                        if (notifyXNetLocoFunc2)
+                            notifyXNetLocoFunc2(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4] & 0x0F);
+                        if (notifyXNetLocoFunc3)
+                            notifyXNetLocoFunc3(SlaveRequestLocoInfo, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata4] >> 4);
+                        SlaveRequestLocoInfo = 0; //reset
+                    }
+                    if (SlaveRequestLocoFkt != 0 && XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] == 0x51)
+                    {
+                        //LENZ only F13-F28
+                        if (notifyXNetLocoFuncX)
+                        {
+                            notifyXNetLocoFuncX(SlaveRequestLocoFkt, 0x04, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
+                            notifyXNetLocoFuncX(SlaveRequestLocoFkt, 0x05, XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata3]);
+                        }
+                        SlaveRequestLocoFkt = 0; //reset
+                    }
+                    break;
+                }
+                case 0x42:	//Antwort Schaltinformation
 						if (notifyXNetTrnt)
 							notifyXNetTrnt((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata1] << 2) | ((XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2] & B110) >> 1), XNetRXBuffer.msg[XNetRXBuffer.get].data[XNetdata2]);
 						break;

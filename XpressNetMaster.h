@@ -168,8 +168,18 @@ class XpressNetMasterClass
 	void SetLocoBusy(uint8_t UserOps, uint16_t Adr);	//Lok besetzt melden
 	
 	void getStatus();					//Staus der Zentrale erfragen
-	void getLocoInfo(uint16_t Adr);		//Slave Modus Lok Informationen erfragen!
-	void getLocoFkt(uint16_t Adr);		//Slave Modus Lok Funktionen erfragen!
+
+    /* Slave requests Locomotive information
+     * Returns false if another loco info request was already active (waiting for reply)
+     * And so the new request was ignored
+     */
+    bool getLocoInfo(uint16_t Adr);	//Slave requests Locomotive information
+
+    /* Slave requests Locomotive function information
+     * Returns false if another loco function request was already active (waiting for reply)
+     * And so the new request was ignored
+     */
+    bool getLocoFkt(uint16_t Adr);	//Slave requests Locomotive function information
 	
 	void SetLocoInfo(uint8_t UserOps, uint8_t Speed, uint8_t F0, uint8_t F1);	//Lokinfo an XNet Melden
 	void SetLocoInfo(uint8_t UserOps, uint8_t Steps, uint8_t Speed, uint8_t F0, uint8_t F1);	//Lokinfo an XNet Melden

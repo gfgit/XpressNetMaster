@@ -186,7 +186,12 @@ class XpressNetMasterClass
      * And so the new request was ignored
      */
     bool getLocoInfo(uint16_t Adr); // Slave requests Locomotive information
-    void getLocoFkt(uint16_t Adr);  // Slave requests Locomotive function information
+
+    /* Slave requests Locomotive function information
+     * Returns false if another loco function request was already active (waiting for reply)
+     * And so the new request was ignored
+     */
+    bool getLocoFkt(uint16_t Adr);  // Slave requests Locomotive function information
 
     void SetLocoInfo(uint8_t UserOps, uint8_t Speed, uint8_t F0,
                      uint8_t F1); // Report loco info to XNet (Master only)

@@ -1382,7 +1382,7 @@ void XpressNetMasterClass::getStatus()
 }
 
 //--------------------------------------------------------------------------------------------
-// Lokinfo an XNet abfragen
+// Query loco info on XNet
 bool XpressNetMasterClass::getLocoInfo(uint16_t Adr)
 {
     if (SlaveRequestLocoInfo != 0)
@@ -1407,9 +1407,18 @@ bool XpressNetMasterClass::getLocoInfo(uint16_t Adr)
 }
 
 //--------------------------------------------------------------------------------------------
-// Lokfkt an XNet abfragen
-void XpressNetMasterClass::getLocoFkt(uint16_t Adr)
+// Query loco function on XNet
+bool XpressNetMasterClass::getLocoFkt(uint16_t Adr)
 {
+    if (SlaveRequestLocoFkt != 0)
+    {
+        // Another request is still pending, ignore new request
+        // NOTE: XNet reply does not contain loco address,
+        // so if 2 request are pending it's impossible to tell to which
+        // the answer was directed.
+        return false;
+    }
+
     uint8_t LocoInfo[] = {0x00, 0xE3, 0x08, 0x00, 0x00, 0x00};
     if (Adr > 99) // Xpressnet long addresses (100 to 9999: AH/AL = 0xC064 to 0xE707)
         LocoInfo[3] = (Adr >> 8) | 0xC0;
